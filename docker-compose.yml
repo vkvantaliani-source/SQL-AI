@@ -17,6 +17,7 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@pgvector:5432/sql_agent
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
+      HTTP_PROXY: ${HTTP_PROXY}
     volumes:
       - ./backend:/app
     ports:
