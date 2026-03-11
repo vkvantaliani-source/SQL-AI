@@ -15,8 +15,8 @@ class SqlGenerator:
             raise RuntimeError("GOOGLE_API_KEY is not set")
 
         genai.configure(api_key=api_key)
-        self.model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-        self.embedding_model = os.getenv("EMBEDDING_MODEL", "models/text-embedding-004")
+        self.model_name = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
+        self.embedding_model = os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001")
         self.model = genai.GenerativeModel(self.model_name)
 
     def create_embedding(self, text: str) -> list[float]:

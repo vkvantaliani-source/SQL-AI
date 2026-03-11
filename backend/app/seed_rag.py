@@ -104,7 +104,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--embedding-model",
-        default=os.getenv("EMBEDDING_MODEL", "models/text-embedding-004"),
+        default=os.getenv("EMBEDDING_MODEL", "models/gemini-embedding-001"),
         help="Embedding model name",
     )
     args = parser.parse_args()

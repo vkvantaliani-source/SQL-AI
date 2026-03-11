@@ -32,6 +32,10 @@ Set your Google API key before starting:
 export GOOGLE_API_KEY="your-key"
 ```
 
+Default models used by the app:
+- LLM: `gemini-3-flash-preview` (`GEMINI_MODEL`)
+- Embeddings: `models/gemini-embedding-001` (`EMBEDDING_MODEL`)
+
 ## RAG data format
 
 Insert historical report/ad-hoc examples into `rag_examples`:
