@@ -4,7 +4,7 @@ This starter project implements your idea:
 - user asks a plain-language analytics question in a web chatbot,
 - backend embeds the question,
 - pgvector retrieves similar report/ad-hoc examples,
-- LLM generates a PostgreSQL SQL query using retrieved examples.
+- Gemini generates a PostgreSQL SQL query using retrieved examples.
 
 ## Architecture
 
@@ -26,10 +26,10 @@ docker compose up --build
 - Web UI: http://localhost:8080
 - API docs: http://localhost:8000/docs
 
-Set your OpenAI key before starting:
+Set your Google API key before starting:
 
 ```bash
-export OPENAI_API_KEY="your-key"
+export GOOGLE_API_KEY="your-key"
 ```
 
 ## RAG data format
@@ -49,6 +49,25 @@ VALUES (
 You can build an ingestion script later to:
 1) generate embedding from description + SQL,
 2) upsert into `rag_examples`.
+
+
+## Seed simple reports into RAG
+
+After starting Postgres and setting `GOOGLE_API_KEY`, run:
+
+```bash
+cd backend
+pip install -r requirements.txt
+python -m app.seed_rag
+```
+
+This inserts 3 starter examples (WAU, revenue, top products) into `rag_examples`, each with an embedding built from report name + description + SQL.
+
+If needed, point to another DB:
+
+```bash
+python -m app.seed_rag --dsn postgresql://postgres:postgres@localhost:5432/sql_agent
+```
 
 ## Next enhancements
 

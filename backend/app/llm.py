@@ -3,20 +3,29 @@ from __future__ import annotations
 import os
 from textwrap import dedent
 
-from openai import OpenAI
+import google.generativeai as genai
 
 from .rag import RagExample
 
 
 class SqlGenerator:
     def __init__(self) -> None:
-        self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
-        self.client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise RuntimeError("GOOGLE_API_KEY is not set")
+
+        genai.configure(api_key=api_key)
+        self.model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+        self.embedding_model = os.getenv("EMBEDDING_MODEL", "models/text-embedding-004")
+        self.model = genai.GenerativeModel(self.model_name)
 
     def create_embedding(self, text: str) -> list[float]:
-        embedding_model = os.getenv("EMBEDDING_MODEL", "text-embedding-3-small")
-        response = self.client.embeddings.create(model=embedding_model, input=text)
-        return response.data[0].embedding
+        result = genai.embed_content(
+            model=self.embedding_model,
+            content=text,
+            task_type="retrieval_query",
+        )
+        return result["embedding"]
 
     def generate_sql(self, question: str, examples: list[RagExample]) -> str:
         examples_block = "\n\n".join(
@@ -29,16 +38,12 @@ class SqlGenerator:
             ]
         ) or "No similar examples found."
 
-        system_prompt = dedent(
-            """
+        prompt = dedent(
+            f"""
             You are a senior analytics engineer that writes PostgreSQL SQL queries.
             Use the retrieved examples as style and business logic references.
             Return only SQL, no markdown fences, no explanation.
-            """
-        ).strip()
 
-        user_prompt = dedent(
-            f"""
             User question:
             {question}
 
@@ -47,12 +52,11 @@ class SqlGenerator:
             """
         ).strip()
 
-        completion = self.client.chat.completions.create(
-            model=self.model,
-            temperature=0.1,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+        response = self.model.generate_content(
+            prompt,
+            generation_config=genai.types.GenerationConfig(
+                temperature=0.1,
+            ),
         )
-        return completion.choices[0].message.content.strip()
+
+        return (response.text or "").strip()

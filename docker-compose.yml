@@ -16,7 +16,7 @@ services:
     command: bash -c "pip install -r requirements.txt && uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     environment:
       DATABASE_URL: postgresql://postgres:postgres@pgvector:5432/sql_agent
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY}
     volumes:
       - ./backend:/app
     ports:
