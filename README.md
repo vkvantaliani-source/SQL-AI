@@ -1,0 +1,58 @@
+# SQL Agent (Text-to-SQL + pgvector RAG + Web Chatbot)
+
+This starter project implements your idea:
+- user asks a plain-language analytics question in a web chatbot,
+- backend embeds the question,
+- pgvector retrieves similar report/ad-hoc examples,
+- LLM generates a PostgreSQL SQL query using retrieved examples.
+
+## Architecture
+
+1. **Frontend chatbot** (`frontend/`)
+   - Simple web page sends question to API.
+2. **FastAPI backend** (`backend/app/`)
+   - Creates embedding for user question.
+   - Retrieves closest examples from `rag_examples` (pgvector cosine distance).
+   - Prompts LLM with retrieved examples and returns generated SQL.
+3. **RAG store in PostgreSQL + pgvector** (`db/init.sql`)
+   - Stores `report_name`, `description`, `sql_text`, `embedding`.
+
+## Run locally
+
+```bash
+docker compose up --build
+```
+
+- Web UI: http://localhost:8080
+- API docs: http://localhost:8000/docs
+
+Set your OpenAI key before starting:
+
+```bash
+export OPENAI_API_KEY="your-key"
+```
+
+## RAG data format
+
+Insert historical report/ad-hoc examples into `rag_examples`:
+
+```sql
+INSERT INTO rag_examples (report_name, description, sql_text, embedding)
+VALUES (
+  'Weekly Active Users',
+  'Count unique users active each week by country',
+  'SELECT date_trunc(''week'', event_time) AS week, country, COUNT(DISTINCT user_id) AS wau ...',
+  '[0.01, -0.02, ...]'::vector
+);
+```
+
+You can build an ingestion script later to:
+1) generate embedding from description + SQL,
+2) upsert into `rag_examples`.
+
+## Next enhancements
+
+- Add schema-aware prompting (table + column metadata).
+- Add SQL validation and guardrails (read-only enforcement).
+- Add query execution preview with safe sandbox role.
+- Add conversation memory and feedback loop (thumbs up/down -> retraining queue).
