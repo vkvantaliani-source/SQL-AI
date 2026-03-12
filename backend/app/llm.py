@@ -53,6 +53,10 @@ class SqlGenerator:
             """
         ).strip()
 
+        print("=== FULL PROMPT START ===")
+        print(prompt)
+        print("=== FULL PROMPT END ===")
+
         response = self.model.generate_content(
             prompt,
             generation_config=genai.types.GenerationConfig(
@@ -60,4 +64,8 @@ class SqlGenerator:
             ),
         )
 
-        return (response.text or "").strip()
+        generated_sql = (response.text or "").strip()
+        print("=== GENERATED SQL START ===")
+        print(generated_sql)
+        print("=== GENERATED SQL END ===")
+        return generated_sql
