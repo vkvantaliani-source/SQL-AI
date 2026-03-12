@@ -24,6 +24,7 @@ class SqlGenerator:
             model=self.embedding_model,
             content=text,
             task_type="retrieval_query",
+            output_dimensionality=1536,
         )
         return result["embedding"]
 
