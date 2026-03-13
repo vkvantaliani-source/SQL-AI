@@ -23,19 +23,37 @@ class RagStore:
 
         with psycopg.connect(self.dsn) as conn:
             with conn.cursor() as cur:
+                # 1) Hybrid search (vector + text score) when embedding is available.
                 if query_embedding:
-                    vector_sql = """
+                    hybrid_sql = """
                     SELECT report_name,
                            description,
                            sql_text,
-                           1 - (embedding <=> %(embedding)s::vector) AS similarity
+                           GREATEST(
+                               1 - (embedding <=> %(embedding)s::vector),
+                               CASE
+                                   WHEN lower(description) = lower(%(query)s) THEN 1.0
+                                   WHEN description ILIKE %(like_query)s THEN 0.9
+                                   WHEN report_name ILIKE %(like_query)s THEN 0.85
+                                   ELSE 0.0
+                               END
+                           ) AS similarity
                     FROM rag_examples
-                    ORDER BY embedding <=> %(embedding)s::vector
+                    ORDER BY similarity DESC, report_name ASC
                     LIMIT %(limit)s;
                     """
-                    cur.execute(vector_sql, {"embedding": query_embedding, "limit": limit})
+                    cur.execute(
+                        hybrid_sql,
+                        {
+                            "embedding": query_embedding,
+                            "query": query_text,
+                            "like_query": f"%{query_text}%",
+                            "limit": limit,
+                        },
+                    )
                     rows = cur.fetchall()
 
+                # 2) Text fallback if embedding unavailable or hybrid returned nothing.
                 if not rows:
                     text_sql = """
                     SELECT report_name,
@@ -43,7 +61,9 @@ class RagStore:
                            sql_text,
                            CASE
                                WHEN lower(description) = lower(%(query)s) THEN 1.0
-                               ELSE 0.8
+                               WHEN description ILIKE %(like_query)s THEN 0.9
+                               WHEN report_name ILIKE %(like_query)s THEN 0.85
+                               ELSE 0.0
                            END AS similarity
                     FROM rag_examples
                     WHERE lower(description) = lower(%(query)s)
@@ -60,6 +80,20 @@ class RagStore:
                             "limit": limit,
                         },
                     )
+                    rows = cur.fetchall()
+
+                # 3) Final safety fallback: always return top rows if table is non-empty.
+                if not rows:
+                    default_sql = """
+                    SELECT report_name,
+                           description,
+                           sql_text,
+                           0.5 AS similarity
+                    FROM rag_examples
+                    ORDER BY created_at DESC, id DESC
+                    LIMIT %(limit)s;
+                    """
+                    cur.execute(default_sql, {"limit": limit})
                     rows = cur.fetchall()
 
         return [

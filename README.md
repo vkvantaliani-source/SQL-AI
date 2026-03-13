@@ -73,6 +73,11 @@ If needed, point to another DB:
 python -m app.seed_rag --dsn postgresql://postgres:postgres@localhost:5432/sql_agent
 ```
 
+
+### Retrieval behavior
+
+The backend uses hybrid retrieval (vector + text match). If vector search returns weak/no matches, it falls back to text matching on `description` and `report_name`. If still nothing matches, it returns recent examples as a final safety fallback so generation still has context.
+
 ## Next enhancements
 
 - Add schema-aware prompting (table + column metadata).
