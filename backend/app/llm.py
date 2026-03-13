@@ -33,7 +33,7 @@ class SqlGenerator:
             [
                 f"Example {i + 1}\n"
                 f"Report: {ex.report_name}\n"
-                f"Description: {ex.description}\n"
+                f"Question: {ex.description}\n"
                 f"SQL:\n{ex.sql}"
                 for i, ex in enumerate(examples)
             ]

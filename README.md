@@ -2,9 +2,10 @@
 
 This starter project implements your idea:
 - user asks a plain-language analytics question in a web chatbot,
-- backend embeds the question,
-- pgvector retrieves similar report/ad-hoc examples,
-- Gemini generates a PostgreSQL SQL query using retrieved examples.
+- agent embeds the question,
+- embedding is compared with previously stored question embeddings in PostgreSQL/pgvector,
+- if similar questions are found, corresponding question + SQL pairs are added to the prompt,
+- Gemini generates a PostgreSQL SQL query from that prompt.
 
 ## Architecture
 
@@ -15,7 +16,7 @@ This starter project implements your idea:
    - Retrieves closest examples from `rag_examples` (pgvector cosine distance).
    - Prompts LLM with retrieved examples and returns generated SQL.
 3. **RAG store in PostgreSQL + pgvector** (`db/init.sql`)
-   - Stores `report_name`, `description`, `sql_text`, `embedding`.
+   - Stores question/SQL pairs (`description`, `sql_text`) and description-only embeddings.
 
 ## Run locally
 
@@ -36,6 +37,7 @@ Default models used by the app:
 - LLM: `gemini-3-flash-preview` (`GEMINI_MODEL`)
 - Embeddings: `models/gemini-embedding-001` (`EMBEDDING_MODEL`)
 - Retrieval threshold: `0.55` (`MIN_SIMILARITY`)
+- Startup seeding: `true` (`AUTO_SEED_ON_STARTUP`)
 
 ## RAG data format
 
@@ -64,7 +66,7 @@ You can build an ingestion script later to:
 
 ## Seed simple reports into RAG
 
-After starting Postgres and setting `GOOGLE_API_KEY`, run (this is required because `db/init.sql` now creates schema only, without zero-vector seed rows):
+After starting Postgres and setting `GOOGLE_API_KEY`, run manually if needed (the API also auto-seeds the same 3 pairs on startup):
 
 ```bash
 cd backend
@@ -73,6 +75,8 @@ python -m app.seed_rag
 ```
 
 This command is safe to re-run: it upserts by `report_name` and refreshes description embeddings.
+
+Initially, the system uses 3 starter question/SQL pairs in the database (auto-seeded on API startup, or via this command).
 
 This inserts 3 starter examples (WAU, revenue, top products) into `rag_examples`, each with an embedding built from the saved business description text.
 

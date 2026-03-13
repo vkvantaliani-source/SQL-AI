@@ -18,6 +18,7 @@ services:
       DATABASE_URL: postgresql://postgres:postgres@pgvector:5432/sql_agent
       GOOGLE_API_KEY: ${GOOGLE_API_KEY}
       HTTP_PROXY: ${HTTP_PROXY}
+      AUTO_SEED_ON_STARTUP: ${AUTO_SEED_ON_STARTUP:-true}
     volumes:
       - ./backend:/app
     ports:
