@@ -54,6 +54,7 @@ def embed_text(model: str, text: str) -> list[float]:
         model=model,
         content=text,
         task_type="retrieval_document",
+        output_dimensionality=1536,
     )
     return response["embedding"]
 
@@ -69,17 +70,18 @@ def seed_rows(rows: Iterable[dict[str, str]], dsn: str, embedding_model: str) ->
     insert_sql = """
     INSERT INTO rag_examples (report_name, description, sql_text, embedding)
     VALUES (%s, %s, %s, %s::vector)
+    ON CONFLICT (report_name)
+    DO UPDATE SET
+        description = EXCLUDED.description,
+        sql_text = EXCLUDED.sql_text,
+        embedding = EXCLUDED.embedding
     """
 
     with psycopg.connect(dsn) as conn:
         with conn.cursor() as cur:
             for row in rows:
-                combined_text = (
-                    f"Report: {row['report_name']}\n"
-                    f"Description: {row['description']}\n"
-                    f"SQL:\n{row['sql_text']}"
-                )
-                embedding = embed_text(embedding_model, combined_text)
+                # Store embeddings based on the business description, per retrieval design.
+                embedding = embed_text(embedding_model, row["description"])
                 cur.execute(
                     insert_sql,
                     (

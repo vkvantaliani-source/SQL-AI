@@ -28,7 +28,7 @@ def health() -> dict[str, str]:
 def chat(request: ChatRequest) -> ChatResponse:
     try:
         question_embedding = sql_generator.create_embedding(request.question)
-        similar_examples = rag_store.query_similar(question_embedding, request.question, limit=5)
+        similar_examples = rag_store.query_similar(question_embedding, limit=5)
         generated_sql = sql_generator.generate_sql(request.question, similar_examples)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc

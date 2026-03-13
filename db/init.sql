@@ -14,6 +14,9 @@ CREATE INDEX IF NOT EXISTS rag_examples_embedding_idx
     USING ivfflat (embedding vector_cosine_ops)
     WITH (lists = 100);
 
+CREATE UNIQUE INDEX IF NOT EXISTS rag_examples_report_name_uidx
+    ON rag_examples (report_name);
+
 
 -- Starter rows so retrieval has initial context even before running the Python seeder.
 WITH zero_vec AS (

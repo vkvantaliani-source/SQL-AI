@@ -35,6 +35,7 @@ export GOOGLE_API_KEY="your-key"
 Default models used by the app:
 - LLM: `gemini-3-flash-preview` (`GEMINI_MODEL`)
 - Embeddings: `models/gemini-embedding-001` (`EMBEDDING_MODEL`)
+- Retrieval threshold: `0.55` (`MIN_SIMILARITY`)
 
 ## RAG data format
 
@@ -65,7 +66,9 @@ pip install -r requirements.txt
 python -m app.seed_rag
 ```
 
-This inserts 3 starter examples (WAU, revenue, top products) into `rag_examples`, each with an embedding built from report name + description + SQL.
+This command is safe to re-run: it upserts by `report_name` and refreshes description embeddings.
+
+This inserts 3 starter examples (WAU, revenue, top products) into `rag_examples`, each with an embedding built from the saved business description text.
 
 If needed, point to another DB:
 
@@ -76,7 +79,7 @@ python -m app.seed_rag --dsn postgresql://postgres:postgres@localhost:5432/sql_a
 
 ### Retrieval behavior
 
-The backend uses hybrid retrieval (vector + text match). If vector search returns weak/no matches, it falls back to text matching on `description` and `report_name`. If still nothing matches, it returns recent examples as a final safety fallback so generation still has context.
+The backend follows pure vector retrieval on saved description embeddings: it embeds the incoming user question, compares against `rag_examples.embedding`, and returns only rows above `MIN_SIMILARITY` (default `0.55`). Retrieved description + SQL pairs are passed to the LLM prompt as context.
 
 ## Next enhancements
 
