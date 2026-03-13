@@ -39,6 +39,12 @@ Default models used by the app:
 
 ## RAG data format
 
+Important retrieval contract:
+- Stored `embedding` is generated from the saved **description** text.
+- Incoming user **question** is embedded at query time.
+- Vector search compares question embedding vs stored description embeddings.
+
+
 Insert historical report/ad-hoc examples into `rag_examples`:
 
 ```sql
@@ -52,13 +58,13 @@ VALUES (
 ```
 
 You can build an ingestion script later to:
-1) generate embedding from description + SQL,
+1) generate embedding from **description only**,
 2) upsert into `rag_examples`.
 
 
 ## Seed simple reports into RAG
 
-After starting Postgres and setting `GOOGLE_API_KEY`, run:
+After starting Postgres and setting `GOOGLE_API_KEY`, run (this is required because `db/init.sql` now creates schema only, without zero-vector seed rows):
 
 ```bash
 cd backend
